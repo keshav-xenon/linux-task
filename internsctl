@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -x
+
+# Version of the command
+VERSION="v0.1.0"
+
+# Function to display help
+show_help() {
+    echo "Usage: internsctl [COMMAND] [OPTIONS]"
+    echo ""
+    echo "Commands:"
+    echo "  cpu getinfo          Get CPU information (similar to lscpu)"
+    echo "  memory getinfo       Get memory information (similar to free)"
+    echo "  user create <name>   Create a new user"
+    echo "  user list            List all regular users"
+    echo "  user list --sudo-only List users with sudo permissions"
+    echo "  file getinfo <file>  Get file information"
+    echo ""
+    echo "Options:"
+    echo "  --help               Show this help message"
+    echo "  --version            Show version information"
+}
+
+# Function to display version
+show_version() {
+    echo "internsctl version $VERSION"
+}
+
+# Main logic
+case "$1" in
+    --help)
+        show_help
+        ;;
+    --version)
+        show_version
+        ;;
+    cpu)
+        if [[ "$2" == "getinfo" ]]; then
+            lscpu
+        else
+            echo "Invalid command. Use 'internsctl --help' for usage."
+        fi
+        ;;
+    memory)
+        if [[ "$2" == "getinfo" ]]; then
+            free -h
+        else
+            echo "Invalid command. Use 'internsctl --help' for usage."
+        fi
+        ;;
+    user)
+        if [[ "$2" == "create" && -n "$3" ]]; then
+            sudo useradd -m "$3" && echo "User '$3' created successfully."
+        elif [[ "$2" == "list" && "$3" == "--sudo-only" ]]; then
+            getent group sudo | cut -d: -f4 | tr ',' '\n'
+        elif [[ "$2" == "list" ]]; then
+            awk -F: '($3 >= 1000 && $3 < 65534) {print $1}' /etc/passwd
+        else
+            echo "Invalid command. Use 'internsctl --help' for usage."
+        fi
+        ;;
+    file)
+        if [[ "$2" == "getinfo" && -n "$3" ]]; then
+            if [[ -f "$3" ]]; then
+                case "$4" in
+                    --size|-s)
+                        stat --format="%s" "$3"
+                        ;;
+                    --permissions|-p)
+                        stat --format="%A" "$3"
+                        ;;
+                    --owner|-o)
+                        stat --format="%U" "$3"
+                        ;;
+                    --last-modified|-m)
+                        stat --format="%y" "$3"
+                        ;;
+                    *)
+                        echo "File: $(basename "$3")"
+                        echo "Access: $(stat --format="%A" "$3")"
+                        echo "Size(B): $(stat --format="%s" "$3")"
+                        echo "Owner: $(stat --format="%U" "$3")"
+                        echo "Modify: $(stat --format="%y" "$3")"
+                        ;;
+                esac
+            else
+                echo "Error: File '$3' not found."
+            fi
+        else
+            echo "Invalid command. Use 'internsctl --help' for usage."
+        fi
+        ;;
+    *)
+        echo "Invalid command. Use 'internsctl --help' for usage."
+        ;;
+esac
