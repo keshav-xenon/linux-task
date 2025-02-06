@@ -1,0 +1,35 @@
+man ./internsctl.1
+
+.TH internsctl 1 "February 2025" "internsctl v0.1.0" "User Commands"
+.SH NAME
+internsctl \- a custom tool for CPU, memory, user, and file operations
+.SH SYNOPSIS
+internsctl [COMMAND] [OPTIONS]
+.SH DESCRIPTION
+internsctl is a custom Linux command for managing CPU, memory, users, and files.
+.SH COMMANDS
+.TP
+cpu getinfo
+Get CPU information.
+.TP
+memory getinfo
+Get memory information.
+.TP
+user create <username>
+Create a new user.
+.TP
+user list
+List all regular users.
+.TP
+user list --sudo-only
+List users with sudo permissions.
+.TP
+file getinfo <file>
+Get file information.
+.SH OPTIONS
+.TP
+--help
+Show help message.
+.TP
+--version
+Show version information.
