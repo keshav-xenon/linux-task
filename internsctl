@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 
 # Version of the command
 VERSION="v0.1.0"
@@ -14,16 +13,60 @@ show_help() {
     echo "  user create <name>   Create a new user"
     echo "  user list            List all regular users"
     echo "  user list --sudo-only List users with sudo permissions"
-    echo "  file getinfo <file>  Get file information"
+    echo "  file getinfo [options] <file-name>  Get file information"
     echo ""
     echo "Options:"
     echo "  --help               Show this help message"
     echo "  --version            Show version information"
+    echo ""
+    echo "File Information Options:"
+    echo "  --size, -s          Print file size"
+    echo "  --permissions, -p    Print file permissions"
+    echo "  --owner, -o         Print file owner"
+    echo "  --last-modified, -m  Print last modified time"
 }
 
 # Function to display version
 show_version() {
-    echo "internsctl version $VERSION"
+    echo "internsctl $VERSION"
+}
+
+# Function to get file information
+get_file_info() {
+    local file="$1"
+    local option="$2"
+
+    if [[ ! -f "$file" ]]; then
+        echo "Error: File '$file' not found."
+        return 1
+    fi
+
+    case "$option" in
+        --size|-s)
+            stat --format="%s" "$file"
+            ;;
+        --permissions|-p)
+            stat --format="%A" "$file"
+            ;;
+        --owner|-o)
+            stat --format="%U" "$file"
+            ;;
+        --last-modified|-m)
+            stat --format="%y" "$file"
+            ;;
+        "")
+            echo "File: $(basename "$file")"
+            echo "Access: $(stat --format="%A" "$file")"
+            echo "Size(B): $(stat --format="%s" "$file")"
+            echo "Owner: $(stat --format="%U" "$file")"
+            echo "Modify: $(stat --format="%y" "$file")"
+            ;;
+        *)
+            echo "Invalid option: $option"
+            echo "Use 'internsctl --help' for usage."
+            return 1
+            ;;
+    esac
 }
 
 # Main logic
@@ -60,31 +103,11 @@ case "$1" in
         fi
         ;;
     file)
-        if [[ "$2" == "getinfo" && -n "$3" ]]; then
-            if [[ -f "$3" ]]; then
-                case "$4" in
-                    --size|-s)
-                        stat --format="%s" "$3"
-                        ;;
-                    --permissions|-p)
-                        stat --format="%A" "$3"
-                        ;;
-                    --owner|-o)
-                        stat --format="%U" "$3"
-                        ;;
-                    --last-modified|-m)
-                        stat --format="%y" "$3"
-                        ;;
-                    *)
-                        echo "File: $(basename "$3")"
-                        echo "Access: $(stat --format="%A" "$3")"
-                        echo "Size(B): $(stat --format="%s" "$3")"
-                        echo "Owner: $(stat --format="%U" "$3")"
-                        echo "Modify: $(stat --format="%y" "$3")"
-                        ;;
-                esac
+        if [[ "$2" == "getinfo" ]]; then
+            if [[ "$3" == --* || "$3" == -* ]]; then
+                get_file_info "$4" "$3"
             else
-                echo "Error: File '$3' not found."
+                get_file_info "$3" ""
             fi
         else
             echo "Invalid command. Use 'internsctl --help' for usage."
